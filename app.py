@@ -1,4 +1,3 @@
-import os
 import tempfile
 from datetime import datetime
 
@@ -7,7 +6,7 @@ import streamlit as st
 import charts
 import metrics
 import pdf_builder
-from llm_insights import generate_insights
+from template_insights import generate_insights
 
 st.set_page_config(page_title="VC Business Review Builder", page_icon="\U0001F4C4", layout="wide")
 
@@ -24,12 +23,6 @@ def fmt_millions(n):
 
 def fmt_pct(x, decimals=0):
     return f"{x * 100:.{decimals}f}%"
-
-
-def get_api_key():
-    if "ANTHROPIC_API_KEY" in st.secrets:
-        return st.secrets["ANTHROPIC_API_KEY"]
-    return os.environ.get("ANTHROPIC_API_KEY")
 
 
 PAGE_DEFS = [
@@ -96,7 +89,7 @@ def build_report_input(client_name, report_type, period_label, m, aw, rsi, known
         "period_label": period_label,
         "kpi_cards": kpi_cards,
         "pages": pages,
-        "known_context": known_context or "None provided.",
+        "known_context": known_context or "",
     }, kpi_cards
 
 
@@ -296,19 +289,14 @@ if uploaded:
                "rsi_pct": lifetime_redeemed / lifetime_awarded}
 
     if st.button("Generate report", type="primary"):
-        api_key = get_api_key()
-        if not api_key:
-            st.error("No Anthropic API key configured. Set ANTHROPIC_API_KEY as a Streamlit secret or env var.")
-            st.stop()
-
         with st.spinner("Computing metrics..."):
             m = metrics.compute_period_metrics(selected_rows, labels)
             aw = metrics.compute_awards_badges(award_ws) if award_ws is not None else None
 
-        with st.spinner("Writing insights (calling Claude)..."):
+        with st.spinner("Writing insights..."):
             report_input, kpi_cards = build_report_input(
                 client_name, report_type_choice, period_label, m, aw, rsi, known_context)
-            insights = generate_insights(report_input, api_key=api_key)
+            insights = generate_insights(report_input)
 
         with st.spinner("Building charts and PDF..."):
             ctx = build_pdf_context(client_name, report_title, period_label, prepared_date,

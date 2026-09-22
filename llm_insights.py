@@ -1,10 +1,21 @@
 """
-Calls the Claude API to write the narrative text for the report. This step
-never sees the raw workbook and never invents a number — it is handed only
-the already-computed metrics dict from metrics.py (all arithmetic done in
-Python) and asked to produce prose that describes those numbers accurately,
-plus recommendations grounded in them. A forced tool-call schema keeps the
-output structured so app.py can drop it straight into the PDF context.
+NOT CURRENTLY USED by app.py — kept here as a documented upgrade path.
+
+app.py uses template_insights.py instead, which needs no external API call
+(current policy doesn't allow external LLM API spend for this app). This
+module is the higher-quality alternative: it calls the Claude API to write
+the narrative text for the report. This step never sees the raw workbook and
+never invents a number — it is handed only the already-computed metrics dict
+from metrics.py (all arithmetic done in Python) and asked to produce prose
+that describes those numbers accurately, plus recommendations grounded in
+them. A forced tool-call schema keeps the output structured so app.py could
+drop it straight into the PDF context, same shape as template_insights.py's
+output.
+
+To switch to this: add `anthropic` back to requirements.txt, set
+ANTHROPIC_API_KEY as a Streamlit secret, and change app.py's import from
+`from template_insights import generate_insights` to
+`from llm_insights import generate_insights` (and pass api_key= through).
 """
 
 import json
